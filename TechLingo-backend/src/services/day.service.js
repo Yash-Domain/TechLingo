@@ -19,7 +19,7 @@ If unsure, produce the simplest correct content that fits the schema.
 `;
 
 /**
- * 🔧 NORMALIZATION (THIS FIXES ZOD)
+ * 🔧 NORMALIZATION (UNCHANGED)
  */
 function normalizeDayContent(raw) {
   return {
@@ -32,44 +32,42 @@ function normalizeDayContent(raw) {
     },
 
     comparison: Array.isArray(raw.comparison) ? raw.comparison : [],
-
     common_mistakes: Array.isArray(raw.common_mistakes)
       ? raw.common_mistakes
       : [],
-
     practice_questions: Array.isArray(raw.practice_questions)
       ? raw.practice_questions
       : [],
-
     unlock_condition: raw.unlock_condition ?? "",
   };
 }
 
-export async function getOrCreateDay(dayNumber) {
-  const existing = await DayContent.findOne({ day: dayNumber });
+export async function getOrCreateDay(userId, dayNumber) {
+  // ✅ PER USER CHECK
+  const existing = await DayContent.findOne({ userId, day: dayNumber });
   if (existing) return existing;
 
   const userPayload = {
-    day: 1,
+    day: dayNumber,
     title: "Names, Not Boxes: Variables and Binding",
     focus:
       "Explain how Python variables are names bound to objects, contrasting with C++ static typing and memory ownership.",
     schema: "DayContentSchema_v1",
   };
 
-  // ✅ raw is ALREADY an object
   const raw = await generateDayContent(SYSTEM_PROMPT, userPayload);
 
   if (!raw) {
     throw new Error("AI returned empty response");
   }
 
-  // 🔑 THIS WAS MISSING
   const normalized = normalizeDayContent(raw);
-
-  // 🔐 ZOD FINAL GATE
   const validated = DayContentSchema.parse(normalized);
 
-  const saved = await DayContent.create(validated);
+  const saved = await DayContent.create({
+    userId,
+    ...validated,
+  });
+
   return saved;
 }

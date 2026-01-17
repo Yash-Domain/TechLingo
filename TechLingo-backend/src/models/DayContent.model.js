@@ -2,7 +2,19 @@ import mongoose from "mongoose";
 
 const DayContentSchema = new mongoose.Schema(
   {
-    day: { type: Number, required: true, unique: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      index: true,
+    },
+
+    day: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 7,
+    },
+
     title: { type: String, required: true },
 
     core_concept: {
@@ -35,5 +47,8 @@ const DayContentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// 🔒 One day per user (CRITICAL)
+DayContentSchema.index({ userId: 1, day: 1 }, { unique: true });
 
 export default mongoose.model("DayContent", DayContentSchema);
