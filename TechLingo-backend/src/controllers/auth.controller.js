@@ -1,6 +1,11 @@
 import User from "../models/User.model.js";
-import { hashPassword, encrypt } from "../utils/crypto.js";
+import {
+  hashPassword,
+  verifyPassword,
+  encrypt,
+} from "../utils/crypto.js";
 
+// ---------------- SIGNUP ----------------
 export async function signup(req, res) {
   const { username, password, openrouterApiKey, model } = req.body;
 
@@ -27,6 +32,30 @@ export async function signup(req, res) {
 
   res.status(201).json({
     message: "User created",
+    userId: user._id,
+  });
+}
+
+// ---------------- LOGIN ----------------
+export async function login(req, res) {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username and password required" });
+  }
+
+  const user = await User.findOne({ username });
+  if (!user) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  const isValid = await verifyPassword(password, user.passwordHash);
+  if (!isValid) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  res.json({
+    message: "Login successful",
     userId: user._id,
   });
 }
