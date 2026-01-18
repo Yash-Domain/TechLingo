@@ -6,6 +6,8 @@ import express from "express";
 import dayRoutes from "./routes/day.routes.js";
 import progressRoutes from "./routes/progress.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+
 
 const app = express();
 
@@ -25,5 +27,7 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use("/api/debug", debugRoutes);
+app.use("/api/auth", authRoutes);
+
 
 export default app;
