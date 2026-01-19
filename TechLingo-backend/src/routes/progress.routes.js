@@ -1,10 +1,9 @@
-import { Router } from "express";
+import express from "express";
+import { completeDay } from "../controllers/progress.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-// placeholder route
-router.post("/complete", (req, res) => {
-  res.json({ status: "progress routes ok" });
-});
+router.post("/complete", completeDay);
+router.get("/", getProgress);
 
 export default router;
