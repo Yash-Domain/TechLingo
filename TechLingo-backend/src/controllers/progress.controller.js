@@ -1,9 +1,5 @@
 import Progress from "../models/Progress.model.js";
 
-/**
- * Mark a day as completed for a user
- * POST /api/progress/complete
- */
 export async function completeDay(req, res) {
   const userId = req.header("x-user-id");
   const { day } = req.body;
@@ -18,7 +14,7 @@ export async function completeDay(req, res) {
 
   const progress = await Progress.findOneAndUpdate(
     { userId },
-    { $addToSet: { completedDays: day } }, // prevents duplicates
+    { $addToSet: { completedDays: day } },
     { upsert: true, new: true }
   );
 
@@ -28,10 +24,6 @@ export async function completeDay(req, res) {
   });
 }
 
-/**
- * Get progress for a user
- * GET /api/progress
- */
 export async function getProgress(req, res) {
   const userId = req.header("x-user-id");
 
@@ -41,7 +33,17 @@ export async function getProgress(req, res) {
 
   const progress = await Progress.findOne({ userId });
 
+  const completedDays = progress?.completedDays ?? [];
+  const maxCompleted = completedDays.length
+    ? Math.max(...completedDays)
+    : 0;
+
+  const currentDay = maxCompleted + 1;
+
   res.json({
-    completedDays: progress ? progress.completedDays : [],
+    completedDays,
+    currentDay,
+    maxUnlockedDay: currentDay,
+    totalDays: 7,
   });
 }
