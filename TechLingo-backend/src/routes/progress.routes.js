@@ -1,5 +1,5 @@
 import express from "express";
-import { completeDay } from "../controllers/progress.controller.js";
+import { completeDay, getProgress } from "../controllers/progress.controller.js";
 
 const router = express.Router();
 
