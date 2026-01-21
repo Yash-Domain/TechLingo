@@ -4,6 +4,7 @@ import {
   verifyPassword,
   encrypt,
 } from "../utils/crypto.js";
+import jwt from "jsonwebtoken";
 
 // ---------------- SIGNUP ----------------
 export async function signup(req, res) {
@@ -54,8 +55,15 @@ export async function login(req, res) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
+  // 🔐 ISSUE JWT (ONLY NEW PART)
+  const token = jwt.sign(
+    { userId: user._id.toString() },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
   res.json({
     message: "Login successful",
-    userId: user._id,
+    token,
   });
 }

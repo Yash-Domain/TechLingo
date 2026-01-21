@@ -4,10 +4,7 @@ import { canAccessDay } from "../services/progress.service.js";
 export async function getDay(req, res) {
   const dayNumber = Number(req.params.day);
 
-  const userId = req.header("x-user-id");
-  if (!userId) {
-    return res.status(401).json({ message: "User not authenticated" });
-  }
+  const userId = req.user.id;
 
   if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 7) {
     return res.status(404).json({ message: "Invalid day" });

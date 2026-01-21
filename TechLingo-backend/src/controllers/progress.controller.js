@@ -1,12 +1,10 @@
 import Progress from "../models/Progress.model.js";
 
 export async function completeDay(req, res) {
-  const userId = req.header("x-user-id");
+  const userId = req.user.id;
   const { day } = req.body;
 
-  if (!userId) {
-    return res.status(401).json({ message: "User not authenticated" });
-  }
+
 
   if (!day || day < 1 || day > 7) {
     return res.status(400).json({ message: "Invalid day" });
@@ -25,11 +23,7 @@ export async function completeDay(req, res) {
 }
 
 export async function getProgress(req, res) {
-  const userId = req.header("x-user-id");
-
-  if (!userId) {
-    return res.status(401).json({ message: "User not authenticated" });
-  }
+  const userId = req.user.id;
 
   const progress = await Progress.findOne({ userId });
 
