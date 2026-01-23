@@ -1,6 +1,8 @@
 import DayContent from "../models/DayContent.model.js";
 import { DayContentSchema } from "../validators/dayContent.schema.js";
 import { generateDayContent } from "./ai.service.js";
+import { decrypt } from "../utils/crypto.js";
+
 
 /* =========================================================
    🎓 CURRICULUM (STATIC, NON-AI CONTROLLED)
@@ -221,9 +223,15 @@ export async function getOrCreateDay(userId, dayNumber) {
 
   const prompt = buildPrompt(dayConfig);
 
-  const raw = await generateDayContent(prompt, {
-    day: dayNumber,
+  const raw = await generateDayContent({
+    systemPrompt: prompt,
+    userPayload: {
+      day: dayNumber,
+    },
+    apiKey: decrypt(user.openrouterApiKey),
+    model: user.model,
   });
+
 
   if (!raw) {
     throw new Error("AI returned empty response");

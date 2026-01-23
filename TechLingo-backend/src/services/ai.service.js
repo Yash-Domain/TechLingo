@@ -1,26 +1,7 @@
 import OpenAI from "openai";
 
 /**
- * Singleton OpenRouter client
- */
-let client = null;
-
-function getClient() {
-  if (!client) {
-    client = new OpenAI({
-      apiKey: process.env.OPENROUTER_API_KEY,
-      baseURL: "https://openrouter.ai/api/v1",
-      defaultHeaders: {
-        "HTTP-Referer": "http://localhost:3000",
-        "X-Title": "TechLingo",
-      },
-    });
-  }
-  return client;
-}
-
-/**
- * Clean + parse AI output like your LeetCode backend
+ * Clean + parse AI output
  */
 function sanitizeAndParseAIResponse(rawText) {
   try {
@@ -37,14 +18,27 @@ function sanitizeAndParseAIResponse(rawText) {
 
 /**
  * Generate Day content via AI
- * - returns PARSED OBJECT or null
- * - NO validation here
+ * - apiKey: decrypted OpenRouter API key (PER USER)
+ * - model: user-selected model
  */
-export async function generateDayContent(systemPrompt, userPayload) {
-  const openai = getClient();
+export async function generateDayContent({
+  systemPrompt,
+  userPayload,
+  apiKey,
+  model,
+}) {
+  // 🔐 Create OpenAI client PER REQUEST (BYOK)
+  const openai = new OpenAI({
+    apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://techlingo.app",
+      "X-Title": "TechLingo",
+    },
+  });
 
   const response = await openai.chat.completions.create({
-    model: "tngtech/deepseek-r1t2-chimera:free", // explicit free model
+    model,
     messages: [
       { role: "system", content: systemPrompt },
       {
