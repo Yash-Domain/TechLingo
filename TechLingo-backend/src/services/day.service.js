@@ -1,8 +1,8 @@
 import DayContent from "../models/DayContent.model.js";
+import User from "../models/User.model.js"; // ✅ ADD THIS
 import { DayContentSchema } from "../validators/dayContent.schema.js";
 import { generateDayContent } from "./ai.service.js";
 import { decrypt } from "../utils/crypto.js";
-
 
 /* =========================================================
    🎓 CURRICULUM (STATIC, NON-AI CONTROLLED)
@@ -119,7 +119,7 @@ const CURRICULUM = {
 };
 
 /* =========================================================
-   🧠 PROMPT BUILDER (DETERMINISTIC)
+   🧠 PROMPT BUILDER
    ========================================================= */
 
 function buildPrompt(dayConfig) {
@@ -147,52 +147,22 @@ ${dayConfig.must_cover.map((c) => `- ${c}`).join("\n")}
 You MUST avoid:
 ${dayConfig.avoid.map((a) => `- ${a}`).join("\n")}
 
-Required Output Format (STRICT JSON):
-{
-  "day": number,
-  "title": string,
-  "core_concept": {
-    "summary": string,
-    "detailed_explanation": string
-  },
-  "comparison": [
-    {
-      "concept": string,
-      "cpp": string,
-      "python": string,
-      "mental_model": string
-    }
-  ],
-  "common_mistakes": string[],
-  "practice_questions": [
-    {
-      "question": string,
-      "expected_thinking": string
-    }
-  ],
-  "unlock_condition": string
-}
-
-Do NOT include markdown.
-Do NOT include extra commentary.
 Return ONLY valid JSON.
 `;
 }
 
 /* =========================================================
-   🔧 NORMALIZATION (UNCHANGED)
+   🔧 NORMALIZATION
    ========================================================= */
 
 function normalizeDayContent(raw) {
   return {
     day: raw.day,
     title: raw.title,
-
     core_concept: {
       summary: raw.core_concept?.summary ?? "",
       detailed_explanation: raw.core_concept?.detailed_explanation ?? "",
     },
-
     comparison: Array.isArray(raw.comparison) ? raw.comparison : [],
     common_mistakes: Array.isArray(raw.common_mistakes)
       ? raw.common_mistakes
@@ -209,41 +179,33 @@ function normalizeDayContent(raw) {
    ========================================================= */
 
 export async function getOrCreateDay(userId, dayNumber) {
-  // ✅ Per-user + per-day cache
-  const existing = await DayContent.findOne({
-    userId,
-    day: dayNumber,
-  });
+  // ✅ Cache check
+  const existing = await DayContent.findOne({ userId, day: dayNumber });
   if (existing) return existing;
 
   const dayConfig = CURRICULUM[dayNumber];
-  if (!dayConfig) {
-    throw new Error("Invalid day requested");
-  }
+  if (!dayConfig) throw new Error("Invalid day requested");
+
+  // ✅ FETCH USER (FIX)
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
 
   const prompt = buildPrompt(dayConfig);
 
   const raw = await generateDayContent({
     systemPrompt: prompt,
-    userPayload: {
-      day: dayNumber,
-    },
+    userPayload: { day: dayNumber },
     apiKey: decrypt(user.openrouterApiKey),
     model: user.model,
   });
 
-
-  if (!raw) {
-    throw new Error("AI returned empty response");
-  }
+  if (!raw) throw new Error("AI returned empty response");
 
   const normalized = normalizeDayContent(raw);
   const validated = DayContentSchema.parse(normalized);
 
-  const saved = await DayContent.create({
+  return await DayContent.create({
     userId,
     ...validated,
   });
-
-  return saved;
 }
