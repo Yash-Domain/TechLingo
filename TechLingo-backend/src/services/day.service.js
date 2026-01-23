@@ -195,8 +195,8 @@ export async function getOrCreateDay(userId, dayNumber) {
   const raw = await generateDayContent({
     systemPrompt: prompt,
     userPayload: { day: dayNumber },
-    apiKey: decrypt(user.openrouterApiKey),
-    model: user.model,
+    apiKey: decrypt(user.openrouter.apiKeyEncrypted),
+    model: user.openrouter.model,
   });
 
   if (!raw) throw new Error("AI returned empty response");
