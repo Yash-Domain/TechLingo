@@ -1,6 +1,44 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { apiRequest } from "../services/api";
 
 export default function Signup() {
+  const navigate = useNavigate();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
+
+  try {
+    await apiRequest("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({
+        username,
+        password,
+        openrouterApiKey: apiKey, // ✅ FIXED
+        model,
+      }),
+    });
+
+    navigate("/login"); // ✅ correct flow
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden px-4">
       
@@ -26,36 +64,65 @@ export default function Signup() {
           </div>
 
           {/* Form */}
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="text"
               placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
               className="w-full rounded-lg bg-zinc-950/50 border border-zinc-800 px-4 py-3 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              className="w-full rounded-lg bg-zinc-950/50 border border-zinc-800 px-4 py-3 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
-            />
+            {/* Password with toggle */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-lg bg-zinc-950/50 border border-zinc-800 px-4 py-3 pr-12 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition"
+                aria-label="Toggle password visibility"
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
 
             <input
               type="text"
               placeholder="OpenRouter API Key"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              required
               className="w-full rounded-lg bg-zinc-950/50 border border-zinc-800 px-4 py-3 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             />
 
             <input
               type="text"
               placeholder="Model name (e.g. gpt-4o)"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              required
               className="w-full rounded-lg bg-zinc-950/50 border border-zinc-800 px-4 py-3 text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none"
             />
 
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+
             <button
               type="submit"
-              className="mt-4 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-500 transition"
+              disabled={loading}
+              className="mt-4 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-500 transition disabled:opacity-60"
             >
-              Sign Up
+              {loading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
 
