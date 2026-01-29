@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { apiRequest } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [completedDays, setCompletedDays] = useState([]);
   const [error, setError] = useState("");
 
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const navigate = useNavigate();
+  const backTriggeredRef = useRef(false);
 
   /* ------------------ LOAD PROGRESS ------------------ */
   useEffect(() => {
@@ -26,21 +27,32 @@ export default function Dashboard() {
     loadProgress();
   }, []);
 
-  /* ------------------ BACK BUTTON HANDLING ------------------ */
+  /* ------------------ BACK BUTTON (DASHBOARD ONLY) ------------------ */
   useEffect(() => {
-    const handlePopState = () => {
+    const onPopState = () => {
+      if (backTriggeredRef.current) return;
+
+      backTriggeredRef.current = true;
       setShowLogoutModal(true);
-      navigate("/dashboard", { replace: true });
     };
 
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [navigate]);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
-  /* ------------------ LOGOUT ACTION ------------------ */
+  /* ------------------ LOGOUT CONFIRM ------------------ */
   function confirmLogout() {
     localStorage.removeItem("token");
     navigate("/login", { replace: true });
+  }
+
+  /* ------------------ CANCEL LOGOUT ------------------ */
+  function cancelLogout() {
+    backTriggeredRef.current = false;
+    setShowLogoutModal(false);
+
+    // restore dashboard state in history
+    navigate("/dashboard", { replace: true });
   }
 
   /* ------------------ DAY LOGIC ------------------ */
@@ -53,7 +65,6 @@ export default function Dashboard() {
   /* ------------------ PAGE WRAPPER ------------------ */
   const PageWrapper = ({ children }) => (
     <div className="relative min-h-screen bg-zinc-950 overflow-hidden px-4">
-      {/* Background blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[128px] opacity-40"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cyan-600 rounded-full blur-[128px] opacity-40"></div>
       <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-600 rounded-full blur-[96px] opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
@@ -159,10 +170,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ------------------ LOGOUT MODAL ------------------ */}
+      {/* Logout Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl">
+          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-white">
               Sign out?
             </h2>
@@ -172,7 +183,7 @@ export default function Dashboard() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
-                onClick={() => setShowLogoutModal(false)}
+                onClick={cancelLogout}
                 className="px-4 py-2 text-sm rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
               >
                 Cancel

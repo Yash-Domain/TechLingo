@@ -1,66 +1,27 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Signup from "../pages/Signup";
 import Login from "../pages/Login";
+import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
-
-/* -------- TEMP PLACEHOLDER COMPONENT -------- */
-function Placeholder({ title }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-300">
-      <h1 className="text-2xl">{title}</h1>
-    </div>
-  );
-}
-
-/* -------- SIMPLE AUTH GUARD -------- */
-function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
-  if (!token) return <Navigate to="/login" replace />;
-  return children;
-}
+import Day from "../pages/Day";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* root */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* auth */}
+        {/* Public */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* dashboard */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* Protected */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/day/:day" element={<Day />} />
+          <Route path="/settings" element={<div className="text-white">Settings</div>} />
+        </Route>
 
-        {/* day page (SINGLE dynamic page) */}
-        <Route
-          path="/day/:day"
-          element={
-            <ProtectedRoute>
-              <Placeholder title="Day Page (Coming Soon)" />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* settings (placeholder for now) */}
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Placeholder title="Settings (Coming Soon)" />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* fallback */}
+        {/* Default */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
