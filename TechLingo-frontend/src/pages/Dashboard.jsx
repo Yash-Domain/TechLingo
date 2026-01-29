@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,6 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const backTriggeredRef = useRef(false);
 
   /* ------------------ LOAD PROGRESS ------------------ */
   useEffect(() => {
@@ -27,32 +26,11 @@ export default function Dashboard() {
     loadProgress();
   }, []);
 
-  /* ------------------ BACK BUTTON (DASHBOARD ONLY) ------------------ */
-  useEffect(() => {
-    const onPopState = () => {
-      if (backTriggeredRef.current) return;
-
-      backTriggeredRef.current = true;
-      setShowLogoutModal(true);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
-
   /* ------------------ LOGOUT CONFIRM ------------------ */
   function confirmLogout() {
     localStorage.removeItem("token");
+    sessionStorage.clear();
     navigate("/login", { replace: true });
-  }
-
-  /* ------------------ CANCEL LOGOUT ------------------ */
-  function cancelLogout() {
-    backTriggeredRef.current = false;
-    setShowLogoutModal(false);
-
-    // restore dashboard state in history
-    navigate("/dashboard", { replace: true });
   }
 
   /* ------------------ DAY LOGIC ------------------ */
@@ -72,7 +50,6 @@ export default function Dashboard() {
     </div>
   );
 
-  /* ------------------ LOADING / ERROR ------------------ */
   if (loading)
     return (
       <PageWrapper>
@@ -91,7 +68,6 @@ export default function Dashboard() {
       </PageWrapper>
     );
 
-  /* ------------------ MAIN UI ------------------ */
   return (
     <PageWrapper>
       {/* Top bar */}
@@ -183,7 +159,7 @@ export default function Dashboard() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
-                onClick={cancelLogout}
+                onClick={() => setShowLogoutModal(false)}
                 className="px-4 py-2 text-sm rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
               >
                 Cancel
