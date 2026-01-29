@@ -30,7 +30,7 @@ export default function Dashboard() {
   function confirmLogout() {
     localStorage.removeItem("token");
     sessionStorage.clear();
-    navigate("/login", { replace: true });
+    window.location.reload();
   }
 
   /* ------------------ DAY LOGIC ------------------ */

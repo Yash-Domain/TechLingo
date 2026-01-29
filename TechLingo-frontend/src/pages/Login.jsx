@@ -21,7 +21,7 @@ export default function Login() {
       });
 
       localStorage.setItem("token", data.token);
-      navigate("/dashboard", { replace: true });
+       navigate("/dashboard", { replace: true });
 
     } catch (err) {
       setError(err.message);
