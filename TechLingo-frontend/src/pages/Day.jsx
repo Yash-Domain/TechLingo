@@ -47,42 +47,68 @@ export default function Day() {
   }
 
   /* ------------------ HELPERS FOR CODE FORMATTING ------------------ */
-  // Intelligently breaks lines on semicolons and comments for readability
   const formatCode = (code, type) => {
     let formatted = code || "";
     
+    // 1. Normalize newlines (handle \n literals from JSON)
+    formatted = formatted.replace(/\\n/g, '\n'); 
+
     if (type === 'cpp') {
-      // Break after semicolons, break before comments
-      formatted = formatted.replace(/;/g, ';\n').replace(/\/\//g, '\n//');
+      // --- SMART FIX FOR C++ ---
+      // If the backend forgot the "//" comment symbol but has a semicolon, 
+      // we assume everything after the LAST semicolon is the comment.
+      if (!formatted.includes('//') && formatted.includes(';')) {
+        // Regex: Find last semicolon, capture text after it, inject "//"
+        formatted = formatted.replace(/;([^;]*)$/, '; //$1');
+      }
+
+      // Standard Formatting
+      formatted = formatted
+        .replace(/;/g, ';\n')       // Force break after semicolon
+        .replace(/\/\//g, '\n//');  // Force break before comment
+    
     } else {
-      // Break before python comments
-      formatted = formatted.replace(/#/g, '\n#');
-      // Also break on semicolons for Python/General text if they exist (common in one-liners)
-      formatted = formatted.replace(/;/g, ';\n');
+      // Python Formatting
+      formatted = formatted
+        .replace(/#/g, '\n#')       // Force break before # comment
+        .replace(/;/g, ';\n');      // Force break after semicolon (if present)
     }
 
-    // Split into lines for individual rendering
+    // Split into lines and remove empty ones
     return formatted.split('\n').filter(line => line.trim() !== '');
   };
 
   const renderCodeLine = (line) => {
-    // Check if line is a comment to apply different styling
-    const isComment = line.trim().startsWith('//') || line.trim().startsWith('#');
+    const trimmed = line.trim();
+    // Identify comments to color them differently
+    const isComment = trimmed.startsWith('//') || trimmed.startsWith('#');
     
     return (
-      <div className={`${isComment ? 'text-emerald-400/80 italic' : 'text-zinc-100'}`}>
+      <div className={`${isComment ? 'text-emerald-400/90 italic' : 'text-zinc-100'} break-words`}>
         {line}
       </div>
     );
   };
 
-  /* ------------------ PAGE WRAPPER ------------------ */
+  /* ------------------ PAGE WRAPPER (FIXED SCROLL) ------------------ */
   const PageWrapper = ({ children }) => (
-    <div className="relative min-h-screen bg-zinc-950 overflow-hidden px-4 font-sans selection:bg-indigo-500/30">
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[128px] opacity-40"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cyan-600 rounded-full blur-[128px] opacity-40"></div>
-      <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-600 rounded-full blur-[96px] opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
-      {children}
+    <div className="min-h-screen bg-zinc-950 font-sans selection:bg-indigo-500/30">
+      {/* FIX: Background Blobs are now in a FIXED container.
+         This prevents them from causing overflow issues and 
+         eliminates the "Double Scrollbar" bug.
+      */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[128px] opacity-40"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cyan-600 rounded-full blur-[128px] opacity-40"></div>
+        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-600 rounded-full blur-[96px] opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
+      </div>
+
+      {/* FIX: Main Content is relative and flows naturally.
+         No "overflow-hidden" here means no accidental second scrollbar.
+      */}
+      <div className="relative z-10 px-4">
+        {children}
+      </div>
     </div>
   );
 
@@ -117,7 +143,7 @@ export default function Day() {
   return (
     <PageWrapper>
       {/* Top bar */}
-      <div className="relative z-10 flex justify-between items-center p-6 max-w-5xl mx-auto">
+      <div className="flex justify-between items-center p-6 max-w-5xl mx-auto">
         <button
           onClick={() => navigate("/dashboard")}
           className="text-sm text-zinc-300 hover:text-white transition flex items-center gap-2 group"
@@ -128,9 +154,7 @@ export default function Day() {
 
       {/* Content */}
       <div className="flex justify-center pb-20">
-        <div className="relative w-full max-w-5xl">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl blur opacity-20"></div>
-
+        <div className="w-full max-w-5xl">
           <div className="relative rounded-3xl bg-zinc-900/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 shadow-2xl space-y-16">
             
             {/* Header */}
@@ -159,7 +183,7 @@ export default function Day() {
               </div>
             </section>
 
-            {/* Comparison (PROFESSIONAL DESIGN) */}
+            {/* Comparison Section */}
             <section>
               <div className="flex items-center gap-3 mb-6 border-b border-zinc-800 pb-4">
                 <div className="p-2 bg-indigo-500/10 rounded-lg">
@@ -174,7 +198,7 @@ export default function Day() {
                 {comparison.map((item) => (
                   <div 
                     key={item._id} 
-                    className="group rounded-2xl border border-zinc-800 bg-zinc-950/50 overflow-hidden hover:border-zinc-700 transition-all duration-300 shadow-xl"
+                    className="group rounded-2xl border border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 transition-all duration-300 shadow-xl"
                   >
                     {/* Concept Title */}
                     <div className="px-6 py-4 border-b border-zinc-800 bg-zinc-900/40 flex items-center gap-2">
@@ -195,16 +219,13 @@ export default function Day() {
                             <span className="text-xs font-bold tracking-wider">C++</span>
                           </div>
                         </div>
-                        <div className="p-0 bg-[#0d0d0d] flex-1 overflow-x-auto">
-                          <pre className="p-5 font-mono text-sm leading-7 whitespace-pre">
-                            <code>
-                              {formatCode(item.cpp, 'cpp').map((line, idx) => (
-                                <div key={idx} className="w-max">
-                                  {renderCodeLine(line)}
-                                </div>
-                              ))}
-                            </code>
-                          </pre>
+                        {/* Pre-wrap and break-words prevents scrollbars */}
+                        <div className="p-5 bg-[#0d0d0d] flex-1 font-mono text-sm leading-7 whitespace-pre-wrap break-words">
+                          {formatCode(item.cpp, 'cpp').map((line, idx) => (
+                            <div key={idx}>
+                              {renderCodeLine(line)}
+                            </div>
+                          ))}
                         </div>
                       </div>
 
@@ -216,16 +237,12 @@ export default function Day() {
                             <span className="text-xs font-bold tracking-wider">PYTHON</span>
                           </div>
                         </div>
-                        <div className="p-0 bg-[#0d0d0d] flex-1 overflow-x-auto">
-                          <pre className="p-5 font-mono text-sm leading-7 whitespace-pre">
-                            <code>
-                              {formatCode(item.python, 'python').map((line, idx) => (
-                                <div key={idx} className="w-max">
-                                  {renderCodeLine(line)}
-                                </div>
-                              ))}
-                            </code>
-                          </pre>
+                        <div className="p-5 bg-[#0d0d0d] flex-1 font-mono text-sm leading-7 whitespace-pre-wrap break-words">
+                          {formatCode(item.python, 'python').map((line, idx) => (
+                            <div key={idx}>
+                              {renderCodeLine(line)}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
@@ -266,16 +283,16 @@ export default function Day() {
               </div>
             </section>
 
-            {/* Practice Questions (UPDATED WITH CODE FORMATTING) */}
+            {/* Practice Questions */}
             <section>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="text-xs font-bold px-3 py-1.5 rounded-lg bg-zinc-800 text-indigo-300 border border-zinc-700 shadow-sm">
+                  {completedCount} / {practice_questions.length} Completed
+                </div>
                 <h2 className="text-xl font-semibold text-white flex items-center gap-2">
                   <span className="w-1 h-6 bg-emerald-500 rounded-full"></span>
                   Practice Questions
                 </h2>
-                <div className="text-sm font-medium px-3 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">
-                  {completedCount} / {practice_questions.length} Completed
-                </div>
               </div>
 
               <div className="space-y-4">
@@ -289,7 +306,7 @@ export default function Day() {
                       className={`
                         cursor-pointer group relative rounded-2xl border px-5 py-5 transition-all duration-300
                         ${isChecked 
-                          ? 'bg-emerald-950/20 border-emerald-500/30 hover:bg-emerald-950/30' 
+                          ? 'bg-emerald-950/20 border-emerald-500/30' 
                           : 'bg-zinc-950/50 border-zinc-800 hover:border-indigo-500/50 hover:bg-zinc-900/60'
                         }
                       `}
@@ -302,23 +319,31 @@ export default function Day() {
 
                         {/* Content */}
                         <div className="flex-1 min-w-0">
-                          {/* Question Text - Formatted as Code */}
-                          <div className={`font-mono text-sm leading-relaxed mb-3 ${isChecked ? 'text-zinc-400 line-through opacity-70' : 'text-zinc-100'}`}>
-                             {/* Re-using formatCode to handle semicolons/multi-lines in questions */}
-                             <div className="whitespace-pre-wrap break-words">
-                               {formatCode(q.question, 'python').map((line, idx) => (
+                          {/* Question Text */}
+                          <div className={`
+                            font-mono text-sm leading-relaxed mb-1 break-words whitespace-pre-wrap transition-all duration-300
+                            ${isChecked ? 'text-zinc-500 line-through opacity-60' : 'text-zinc-100'}
+                          `}>
+                             {formatCode(q.question, 'python').map((line, idx) => (
                                   <div key={idx} className="mb-0.5">
-                                    {line}
+                                    {renderCodeLine(line)}
                                   </div>
                                ))}
-                             </div>
                           </div>
                           
-                          {/* Expected Thinking */}
-                          <div className={`flex gap-2 text-sm transition-all duration-500 ${isChecked ? 'text-emerald-400/70' : 'text-zinc-500'}`}>
-                            <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                            <span>{q.expected_thinking}</span>
+                          {/* Expected Thinking (Hidden until checked) */}
+                          <div className={`
+                            grid transition-all duration-500 ease-in-out
+                            ${isChecked ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0 mt-0'}
+                          `}>
+                            <div className="overflow-hidden">
+                              <div className="flex gap-2 text-sm text-emerald-400/90 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                                <Lightbulb className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                                <span>{q.expected_thinking}</span>
+                              </div>
+                            </div>
                           </div>
+                          
                         </div>
                       </div>
                     </div>
