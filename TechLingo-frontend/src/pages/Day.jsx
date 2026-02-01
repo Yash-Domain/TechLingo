@@ -46,6 +46,22 @@ export default function Day() {
     });
   }
 
+  /* ------------------ MARK DAY COMPLETE ------------------ */
+async function markDayComplete() {
+  try {
+    await apiRequest("/api/progress/complete", {
+      method: "POST",
+      body: JSON.stringify({ day: Number(day) }),
+    });
+
+    // Go back to dashboard so next day unlocks
+    navigate("/dashboard");
+  } catch (err) {
+    console.error("Failed to mark day complete", err);
+  }
+}
+
+
   /* ------------------ HELPERS FOR CODE FORMATTING ------------------ */
   const formatCode = (code, type) => {
     let formatted = code || "";
@@ -351,6 +367,17 @@ export default function Day() {
                 })}
               </div>
             </section>
+
+                {/* Mark Day Complete */}
+              <div className="flex justify-end pt-8 border-t border-zinc-800">
+                <button
+                  onClick={markDayComplete}
+                  className="px-6 py-3 rounded-xl font-semibold bg-emerald-500 text-black hover:bg-emerald-400 transition"
+                >
+                  Mark Day {day} Complete
+                </button>
+              </div>
+
 
           </div>
         </div>
