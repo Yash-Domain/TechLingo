@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
-import { Key, Cpu, Lock, User } from "lucide-react"; 
+import { Key, Cpu, Lock } from "lucide-react"; 
 
 export default function Settings() {
   const navigate = useNavigate();
 
-  // 1. Try to get name from localStorage first (Instant display)
+  // 1. Try to get name from localStorage first for instant load
   const [username, setUsername] = useState(localStorage.getItem("username") || "User");
   
   const [activeSection, setActiveSection] = useState(null);
@@ -18,20 +18,20 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // 2. Also fetch fresh info from API on load
+  // 2. Fetch fresh user info from the new /api/settings endpoint
   useEffect(() => {
     async function fetchUser() {
       try {
-        // Adjust this endpoint if your backend uses a different one
-        const data = await apiRequest("/api/auth/me"); 
+        const data = await apiRequest("/api/settings"); 
         
-        if (data && data.username) {
-          setUsername(data.username);
-          // Update localStorage to keep it fresh
-          localStorage.setItem("username", data.username);
+        // Based on your Postman screenshot, the structure is data.user.username
+        if (data && data.user && data.user.username) {
+          setUsername(data.user.username);
+          // Keep localStorage in sync
+          localStorage.setItem("username", data.user.username);
         }
       } catch (err) {
-        console.warn("Could not fetch latest user details, using cached name.");
+        console.warn("Could not fetch latest user details, using cached name.", err);
       }
     }
     fetchUser();
@@ -43,12 +43,15 @@ export default function Settings() {
     setSuccess("");
 
     try {
+      // Sending updates to the same endpoint (PUT)
       await apiRequest("/api/settings", {
         method: "PUT",
         body: JSON.stringify(payload),
       });
 
       setSuccess("Settings updated successfully");
+      
+      // Clear sensitive fields on success
       setApiKey("");
       setModel("");
       setPassword("");
@@ -60,7 +63,7 @@ export default function Settings() {
     }
   }
 
-  // Input styles
+  // Common styles for inputs
   const inputClasses = "w-full rounded-lg bg-zinc-950 border border-zinc-700 p-3 text-white placeholder-zinc-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition";
 
   return (
@@ -76,7 +79,7 @@ export default function Settings() {
         <div className="relative rounded-2xl bg-zinc-900/90 backdrop-blur-xl border border-white/10 p-8 shadow-2xl space-y-8">
           
           {/* -------- PROFILE HEADER -------- */}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
             {/* Avatar Circle */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-[2px] mb-3 shadow-lg shadow-purple-500/20">
               <div className="w-full h-full rounded-full bg-zinc-900 flex items-center justify-center">
@@ -86,7 +89,7 @@ export default function Settings() {
               </div>
             </div>
             
-            {/* FULL USERNAME DISPLAYED HERE */}
+            {/* Username Display */}
             <h2 className="text-2xl font-bold text-white tracking-wide">{username}</h2>
             <p className="text-zinc-500 text-sm font-medium">Account Settings</p>
           </div>
