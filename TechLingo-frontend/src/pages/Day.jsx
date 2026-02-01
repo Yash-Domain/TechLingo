@@ -11,20 +11,35 @@ export default function Day() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [checkedMap, setCheckedMap] = useState({});
+  const [submitting, setSubmitting] = useState(false); // New state to prevent double-clicks
 
   /* ------------------ FETCH DAY ------------------ */
   useEffect(() => {
+    // 1. Race Condition Fix: Reset state immediately when 'day' changes
+    setDayData(null);
+    setLoading(true);
+    setError("");
+    setCheckedMap({});
+
     async function loadDay() {
       try {
         const data = await apiRequest(`/api/day/${day}`);
+        
+        // 2. Safety Check: Ensure data is valid before setting
+        if (!data || !data.title) {
+            throw new Error("Content is being generated. Please wait a moment and reload.");
+        }
+
         setDayData(data);
 
         // Load checkbox states from localStorage
         const initialChecked = {};
-        data.practice_questions.forEach((q) => {
-          const key = `techlingo:day:${day}:question:${q._id}`;
-          initialChecked[q._id] = localStorage.getItem(key) === "true";
-        });
+        if (data.practice_questions) {
+            data.practice_questions.forEach((q) => {
+              const key = `techlingo:day:${day}:question:${q._id}`;
+              initialChecked[q._id] = localStorage.getItem(key) === "true";
+            });
+        }
         setCheckedMap(initialChecked);
       } catch (err) {
         setError(err.message || "Failed to load day content");
@@ -47,20 +62,23 @@ export default function Day() {
   }
 
   /* ------------------ MARK DAY COMPLETE ------------------ */
-async function markDayComplete() {
-  try {
-    await apiRequest("/api/progress/complete", {
-      method: "POST",
-      body: JSON.stringify({ day: Number(day) }),
-    });
+  async function markDayComplete() {
+    if (submitting) return; // Prevent multiple clicks
+    setSubmitting(true);
+    
+    try {
+      await apiRequest("/api/progress/complete", {
+        method: "POST",
+        body: JSON.stringify({ day: Number(day) }),
+      });
 
-    // Go back to dashboard so next day unlocks
-    navigate("/dashboard");
-  } catch (err) {
-    console.error("Failed to mark day complete", err);
+      // Go back to dashboard so next day unlocks
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Failed to mark day complete", err);
+      setSubmitting(false); // Only re-enable on error
+    }
   }
-}
-
 
   /* ------------------ HELPERS FOR CODE FORMATTING ------------------ */
   const formatCode = (code, type) => {
@@ -106,33 +124,27 @@ async function markDayComplete() {
     );
   };
 
-  /* ------------------ PAGE WRAPPER (FIXED SCROLL) ------------------ */
+  /* ------------------ PAGE WRAPPER ------------------ */
   const PageWrapper = ({ children }) => (
     <div className="min-h-screen bg-zinc-950 font-sans selection:bg-indigo-500/30">
-      {/* FIX: Background Blobs are now in a FIXED container.
-         This prevents them from causing overflow issues and 
-         eliminates the "Double Scrollbar" bug.
-      */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[128px] opacity-40"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cyan-600 rounded-full blur-[128px] opacity-40"></div>
         <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-600 rounded-full blur-[96px] opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
       </div>
-
-      {/* FIX: Main Content is relative and flows naturally.
-         No "overflow-hidden" here means no accidental second scrollbar.
-      */}
       <div className="relative z-10 px-4">
         {children}
       </div>
     </div>
   );
 
-  if (loading)
+  // 3. Robust Loading Check: If loading OR data is null (race condition), show loader
+  if (loading || !dayData)
     return (
       <PageWrapper>
-        <div className="flex min-h-screen items-center justify-center text-zinc-400 animate-pulse">
-          Loading lesson content...
+        <div className="flex min-h-screen items-center justify-center text-zinc-400 animate-pulse flex-col gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+          <p>Generating lesson content...</p>
         </div>
       </PageWrapper>
     );
@@ -235,7 +247,6 @@ async function markDayComplete() {
                             <span className="text-xs font-bold tracking-wider">C++</span>
                           </div>
                         </div>
-                        {/* Pre-wrap and break-words prevents scrollbars */}
                         <div className="p-5 bg-[#0d0d0d] flex-1 font-mono text-sm leading-7 whitespace-pre-wrap break-words">
                           {formatCode(item.cpp, 'cpp').map((line, idx) => (
                             <div key={idx}>
@@ -372,9 +383,16 @@ async function markDayComplete() {
               <div className="flex justify-end pt-8 border-t border-zinc-800">
                 <button
                   onClick={markDayComplete}
-                  className="px-6 py-3 rounded-xl font-semibold bg-emerald-500 text-black hover:bg-emerald-400 transition"
+                  disabled={submitting}
+                  className={`
+                    px-6 py-3 rounded-xl font-semibold transition
+                    ${submitting 
+                      ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
+                      : 'bg-emerald-500 text-black hover:bg-emerald-400'
+                    }
+                  `}
                 >
-                  Mark Day {day} Complete
+                  {submitting ? "Saving..." : `Mark Day ${day} Complete`}
                 </button>
               </div>
 
