@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Day from "./pages/Day";
+import Settings from "./pages/Settings";
+
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem("token");
@@ -56,7 +58,7 @@ export default function App() {
         path="/settings"
         element={
           <RequireAuth>
-            <div className="text-white">Settings</div>
+            <Settings />
           </RequireAuth>
         }
       />
