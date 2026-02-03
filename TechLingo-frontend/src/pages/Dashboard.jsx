@@ -33,11 +33,14 @@ export default function Dashboard() {
     window.location.reload();
   }
 
-  /* ------------------ DAY LOGIC ------------------ */
+  /* ------------------ DAY LOGIC (FIXED) ------------------ */
   const TOTAL_DAYS = 7;
   const lastCompletedDay =
     completedDays.length > 0 ? Math.max(...completedDays) : 0;
-  const currentDay = Math.min(lastCompletedDay + 1, TOTAL_DAYS);
+
+  const isCourseCompleted = completedDays.length === TOTAL_DAYS;
+  const currentDay = isCourseCompleted ? null : lastCompletedDay + 1;
+
   const days = Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1);
 
   /* ------------------ PAGE WRAPPER ------------------ */
@@ -93,18 +96,34 @@ export default function Dashboard() {
           <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-3xl blur opacity-20"></div>
 
           <div className="relative rounded-3xl bg-zinc-900/80 backdrop-blur-xl border border-white/10 p-10 shadow-2xl">
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-              Your Learning Roadmap
-            </h1>
-            <p className="text-zinc-400 mt-2 mb-8">
-              Continue where you left off
-            </p>
+            {/* Heading */}
+            {isCourseCompleted ? (
+              <>
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                  🎉 Congratulations, Course Completed
+                </h1>
+                <p className="text-zinc-400 mt-2 mb-8">
+                  You’ve successfully completed the TechLingo learning path.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                  Your Learning Roadmap
+                </h1>
+                <p className="text-zinc-400 mt-2 mb-8">
+                  Continue where you left off
+                </p>
+              </>
+            )}
 
+            {/* Days */}
             <div className="grid grid-cols-7 gap-6">
               {days.map((day) => {
                 const isCompleted = completedDays.includes(day);
-                const isCurrent = day === currentDay;
-                const isClickable = day <= currentDay;
+                const isCurrent = currentDay !== null && day === currentDay;
+                const isClickable =
+                  isCompleted || isCurrent;
 
                 let cardStyle =
                   "bg-zinc-950/70 border-zinc-800 text-zinc-400";
@@ -125,9 +144,15 @@ export default function Dashboard() {
                 return (
                   <div
                     key={day}
-                    onClick={() => isClickable && navigate(`/day/${day}`)}
+                    onClick={() =>
+                      isClickable && navigate(`/day/${day}`)
+                    }
                     className={`h-28 rounded-2xl border flex flex-col items-center justify-center transition
-                      ${isClickable ? "cursor-pointer hover:scale-[1.03]" : "opacity-60"}
+                      ${
+                        isClickable
+                          ? "cursor-pointer hover:scale-[1.03]"
+                          : "opacity-60"
+                      }
                       ${cardStyle}`}
                   >
                     <span className={`text-lg font-semibold ${labelStyle}`}>
