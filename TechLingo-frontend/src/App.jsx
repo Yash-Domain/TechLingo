@@ -4,7 +4,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Day from "./pages/Day";
 import Settings from "./pages/Settings";
-
+import Home from "./pages/Home";
 
 function RequireAuth({ children }) {
   const token = localStorage.getItem("token");
@@ -20,6 +20,14 @@ export default function App() {
   return (
     <Routes>
       {/* PUBLIC (outside house) */}
+      <Route
+        path="/"
+        element={
+          <RequireGuest>
+            <Home />
+          </RequireGuest>
+        }
+      />
       <Route
         path="/login"
         element={
@@ -63,8 +71,7 @@ export default function App() {
         }
       />
 
-      {/* ROOT */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* FALLBACK */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
