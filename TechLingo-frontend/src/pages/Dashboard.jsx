@@ -30,7 +30,7 @@ export default function Dashboard() {
   function confirmLogout() {
     localStorage.removeItem("token");
     sessionStorage.clear();
-    navigate("/"); // ✅ Changed: Redirects to Home instead of reload
+    navigate("/"); 
   }
 
   /* ------------------ DAY LOGIC ------------------ */
@@ -80,25 +80,25 @@ export default function Dashboard() {
       <div className="relative z-10 flex justify-end gap-6 p-6">
         <button
           onClick={() => navigate("/settings")}
-          className="text-sm text-zinc-300 hover:text-white transition cursor-pointer" // ✅ Added cursor-pointer
+          className="text-sm text-zinc-300 hover:text-white transition cursor-pointer"
         >
           Settings
         </button>
 
         <button
           onClick={() => setShowLogoutModal(true)}
-          className="text-sm text-red-400 hover:text-red-300 transition cursor-pointer" // ✅ Added cursor-pointer
+          className="text-sm text-red-400 hover:text-red-300 transition cursor-pointer"
         >
           Sign out
         </button>
       </div>
 
       {/* Dashboard card */}
-      <div className="flex min-h-[80vh] items-center justify-center">
+      <div className="flex min-h-[80vh] items-center justify-center pb-12"> {/* Added padding bottom for mobile scroll */}
         <div className="relative w-full max-w-5xl">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-3xl blur opacity-20"></div>
 
-          <div className="relative rounded-3xl bg-zinc-900/80 backdrop-blur-xl border border-white/10 p-10 shadow-2xl">
+          <div className="relative rounded-3xl bg-zinc-900/80 backdrop-blur-xl border border-white/10 p-6 md:p-10 shadow-2xl">
             
             {/* Header Section */}
             <div className="mb-8">
@@ -113,7 +113,7 @@ export default function Dashboard() {
                 </>
               ) : (
                 <>
-                  <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                  <h1 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
                     Your Learning Roadmap
                   </h1>
                   <p className="text-zinc-400 mt-2">
@@ -122,7 +122,7 @@ export default function Dashboard() {
                 </>
               )}
 
-              {/* ✅ New Progress Bar Section */}
+              {/* Progress Bar Section */}
               <div className="mt-6">
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Course Progress</span>
@@ -137,8 +137,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-6">
+            {/* ✅ FIXED: Responsive Grid */}
+            {/* Mobile: 2 cols | Tablet: 4 cols | Desktop: 7 cols */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-6">
               {days.map((day) => {
                 const isCompleted = completedDays.includes(day);
                 const isCurrent = currentDay !== null && day === currentDay;
@@ -161,15 +162,15 @@ export default function Dashboard() {
                   <div
                     key={day}
                     onClick={() => isClickable && navigate(`/day/${day}`)}
-                    className={`h-28 rounded-2xl border flex flex-col items-center justify-center transition
+                    className={`h-24 md:h-28 rounded-2xl border flex flex-col items-center justify-center transition
                       ${isClickable ? "cursor-pointer hover:scale-[1.03]" : "opacity-60"}
                       ${cardStyle}`}
                   >
-                    <span className={`text-lg font-semibold ${labelStyle}`}>
+                    <span className={`text-base md:text-lg font-semibold ${labelStyle}`}>
                       Day {day}
                     </span>
                     {isCurrent && (
-                      <span className="text-xs mt-1 text-indigo-400">
+                      <span className="text-[10px] md:text-xs mt-1 text-indigo-400">
                         Current
                       </span>
                     )}
@@ -183,7 +184,7 @@ export default function Dashboard() {
 
       {/* Logout Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-white/10 p-6 shadow-2xl">
             <h2 className="text-lg font-semibold text-white">
               Sign out?
