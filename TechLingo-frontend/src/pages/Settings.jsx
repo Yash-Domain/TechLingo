@@ -12,7 +12,9 @@ export default function Settings() {
   const [activeSection, setActiveSection] = useState(null);
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("");
+  
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // ✅ Added state for password visibility
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,10 +26,8 @@ export default function Settings() {
       try {
         const data = await apiRequest("/api/settings"); 
         
-        // Based on your Postman screenshot, the structure is data.user.username
         if (data && data.user && data.user.username) {
           setUsername(data.user.username);
-          // Keep localStorage in sync
           localStorage.setItem("username", data.user.username);
         }
       } catch (err) {
@@ -43,7 +43,6 @@ export default function Settings() {
     setSuccess("");
 
     try {
-      // Sending updates to the same endpoint (PUT)
       await apiRequest("/api/settings", {
         method: "PUT",
         body: JSON.stringify(payload),
@@ -56,6 +55,7 @@ export default function Settings() {
       setModel("");
       setPassword("");
       setActiveSection(null);
+      setShowPassword(false); // Reset visibility
     } catch (err) {
       setError(err.message || "Failed to update settings");
     } finally {
@@ -166,19 +166,36 @@ export default function Settings() {
           {activeSection === "password" && (
             <Section
               title="Change Password"
-              onBack={() => setActiveSection(null)}
+              onBack={() => {
+                setActiveSection(null);
+                setShowPassword(false);
+              }}
               onSave={() => handleSave({ password })}
               loading={loading}
             >
               <div className="space-y-2">
                 <label className="text-sm text-zinc-400 ml-1">New Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  className={inputClasses}
-                />
+                
+                {/* ✅ Updated Password Input with Toggle */}
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className={`${inputClasses} pr-12`} // Added padding-right so text doesn't hit button
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition cursor-pointer"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+
               </div>
             </Section>
           )}
@@ -198,7 +215,7 @@ export default function Settings() {
           {/* Back to Dashboard Link */}
           <button
             onClick={() => navigate("/dashboard")}
-            className="w-full text-sm text-zinc-400 hover:text-white pt-2 transition-colors flex items-center justify-center gap-2 group"
+            className="w-full text-sm text-zinc-400 hover:text-white pt-2 transition-colors flex items-center justify-center gap-2 group cursor-pointer"
           >
             <span className="group-hover:-translate-x-1 transition-transform">←</span> 
             Back to Dashboard
@@ -215,7 +232,7 @@ function Option({ children, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-4 rounded-xl bg-zinc-950/40 border border-zinc-800 p-3 text-left text-zinc-100 hover:border-indigo-500/50 hover:bg-zinc-800/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all duration-300 group"
+      className="w-full flex items-center gap-4 rounded-xl bg-zinc-950/40 border border-zinc-800 p-3 text-left text-zinc-100 hover:border-indigo-500/50 hover:bg-zinc-800/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all duration-300 group cursor-pointer"
     >
       {children}
       <span className="ml-auto text-zinc-600 group-hover:text-indigo-400 transition-colors">→</span>
@@ -235,14 +252,14 @@ function Section({ title, children, onBack, onSave, loading }) {
       <div className="flex justify-between items-center pt-4">
         <button
           onClick={onBack}
-          className="text-sm text-zinc-400 hover:text-white transition-colors"
+          className="text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer"
         >
           Cancel
         </button>
         <button
           onClick={onSave}
           disabled={loading}
-          className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20"
+          className="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 cursor-pointer"
         >
           {loading ? (
             <span className="flex items-center gap-2">
