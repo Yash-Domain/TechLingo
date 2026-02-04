@@ -30,10 +30,10 @@ export default function Dashboard() {
   function confirmLogout() {
     localStorage.removeItem("token");
     sessionStorage.clear();
-    window.location.reload();
+    navigate("/"); // ✅ Changed: Redirects to Home instead of reload
   }
 
-  /* ------------------ DAY LOGIC (FIXED) ------------------ */
+  /* ------------------ DAY LOGIC ------------------ */
   const TOTAL_DAYS = 7;
   const lastCompletedDay =
     completedDays.length > 0 ? Math.max(...completedDays) : 0;
@@ -42,6 +42,9 @@ export default function Dashboard() {
   const currentDay = isCourseCompleted ? null : lastCompletedDay + 1;
 
   const days = Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1);
+
+  // Calculate Percentage
+  const progressPercentage = Math.round((completedDays.length / TOTAL_DAYS) * 100);
 
   /* ------------------ PAGE WRAPPER ------------------ */
   const PageWrapper = ({ children }) => (
@@ -77,14 +80,14 @@ export default function Dashboard() {
       <div className="relative z-10 flex justify-end gap-6 p-6">
         <button
           onClick={() => navigate("/settings")}
-          className="text-sm text-zinc-300 hover:text-white transition"
+          className="text-sm text-zinc-300 hover:text-white transition cursor-pointer" // ✅ Added cursor-pointer
         >
           Settings
         </button>
 
         <button
           onClick={() => setShowLogoutModal(true)}
-          className="text-sm text-red-400 hover:text-red-300 transition"
+          className="text-sm text-red-400 hover:text-red-300 transition cursor-pointer" // ✅ Added cursor-pointer
         >
           Sign out
         </button>
@@ -96,63 +99,70 @@ export default function Dashboard() {
           <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-3xl blur opacity-20"></div>
 
           <div className="relative rounded-3xl bg-zinc-900/80 backdrop-blur-xl border border-white/10 p-10 shadow-2xl">
-            {/* Heading */}
-            {isCourseCompleted ? (
-              <>
-                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                  🎉 Congratulations, Course Completed
-                </h1>
-                <p className="text-zinc-400 mt-2 mb-8">
-                  You’ve successfully completed the TechLingo learning path.
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-                  Your Learning Roadmap
-                </h1>
-                <p className="text-zinc-400 mt-2 mb-8">
-                  Continue where you left off
-                </p>
-              </>
-            )}
+            
+            {/* Header Section */}
+            <div className="mb-8">
+              {isCourseCompleted ? (
+                <>
+                  <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                    🎉 Congratulations, Course Completed
+                  </h1>
+                  <p className="text-zinc-400 mt-2">
+                    You’ve successfully completed the TechLingo learning path.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                    Your Learning Roadmap
+                  </h1>
+                  <p className="text-zinc-400 mt-2">
+                    Continue where you left off
+                  </p>
+                </>
+              )}
 
-            {/* Days */}
+              {/* ✅ New Progress Bar Section */}
+              <div className="mt-6">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Course Progress</span>
+                  <span className="text-lg font-bold text-indigo-400">{progressPercentage}%</span>
+                </div>
+                <div className="w-full h-3 bg-zinc-950/50 rounded-full overflow-hidden border border-white/5">
+                  <div 
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Days Grid */}
             <div className="grid grid-cols-7 gap-6">
               {days.map((day) => {
                 const isCompleted = completedDays.includes(day);
                 const isCurrent = currentDay !== null && day === currentDay;
-                const isClickable =
-                  isCompleted || isCurrent;
+                const isClickable = isCompleted || isCurrent;
 
-                let cardStyle =
-                  "bg-zinc-950/70 border-zinc-800 text-zinc-400";
+                let cardStyle = "bg-zinc-950/70 border-zinc-800 text-zinc-400";
                 let labelStyle = "text-zinc-400";
 
                 if (isCompleted) {
-                  cardStyle =
-                    "bg-zinc-950/70 border-emerald-500/60 text-emerald-400";
+                  cardStyle = "bg-zinc-950/70 border-emerald-500/60 text-emerald-400";
                   labelStyle = "text-emerald-400";
                 }
 
                 if (isCurrent) {
-                  cardStyle =
-                    "bg-indigo-950/60 border-indigo-500/70 text-indigo-300";
+                  cardStyle = "bg-indigo-950/60 border-indigo-500/70 text-indigo-300";
                   labelStyle = "text-indigo-300";
                 }
 
                 return (
                   <div
                     key={day}
-                    onClick={() =>
-                      isClickable && navigate(`/day/${day}`)
-                    }
+                    onClick={() => isClickable && navigate(`/day/${day}`)}
                     className={`h-28 rounded-2xl border flex flex-col items-center justify-center transition
-                      ${
-                        isClickable
-                          ? "cursor-pointer hover:scale-[1.03]"
-                          : "opacity-60"
-                      }
+                      ${isClickable ? "cursor-pointer hover:scale-[1.03]" : "opacity-60"}
                       ${cardStyle}`}
                   >
                     <span className={`text-lg font-semibold ${labelStyle}`}>
@@ -185,14 +195,14 @@ export default function Dashboard() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="px-4 py-2 text-sm rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                className="px-4 py-2 text-sm rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 cursor-pointer"
               >
                 Cancel
               </button>
 
               <button
                 onClick={confirmLogout}
-                className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500"
+                className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-500 cursor-pointer"
               >
                 Sign out
               </button>

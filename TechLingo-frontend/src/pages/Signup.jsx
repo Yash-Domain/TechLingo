@@ -14,34 +14,45 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-async function handleSubmit(e) {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-  try {
-    await apiRequest("/api/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({
-        username,
-        password,
-        openrouterApiKey: apiKey, // ✅ FIXED
-        model,
-      }),
-    });
+    try {
+      await apiRequest("/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          username,
+          password,
+          openrouterApiKey: apiKey,
+          model,
+        }),
+      });
 
-    navigate("/login"); // ✅ correct flow
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
+      navigate("/login");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
-}
-
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden px-4">
       
+      {/* Back to Home Button */}
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 z-10 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m12 19-7-7 7-7"/>
+          <path d="M19 12H5"/>
+        </svg>
+        <span className="text-sm font-medium">Back to Home</span>
+      </Link>
+
       {/* Background blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[128px] opacity-40"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cyan-600 rounded-full blur-[128px] opacity-40"></div>
@@ -88,7 +99,7 @@ async function handleSubmit(e) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition cursor-pointer"
                 aria-label="Toggle password visibility"
               >
                 {showPassword ? "🙈" : "👁️"}
@@ -120,23 +131,49 @@ async function handleSubmit(e) {
             <button
               type="submit"
               disabled={loading}
-              className="mt-4 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-500 transition disabled:opacity-60"
+              className="mt-4 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-500 transition disabled:opacity-60 cursor-pointer"
             >
               {loading ? "Creating account..." : "Sign Up"}
             </button>
           </form>
 
-          {/* Login redirect */}
-          <div className="mt-6 text-center">
+          {/* Footer Links (Login + Helpers) */}
+          <div className="mt-6 text-center space-y-3">
             <p className="text-sm text-zinc-400">
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-indigo-400 hover:text-indigo-300 font-medium transition"
+                className="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer"
               >
                 Log in
               </Link>
             </p>
+
+            {/* Helper Links moved below login */}
+            <div className="flex flex-col gap-1 pt-2 border-t border-white/5">
+              <p className="text-sm text-zinc-400">
+                Don't have an API key?{" "}
+                <a 
+                  href="https://openrouter.ai/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer"
+                >
+                  Generate key
+                </a>
+              </p>
+              <p className="text-sm text-zinc-400">
+                How to generate key?{" "}
+                <a 
+                  href="https://youtu.be/VvJvJ0uXiVQ?si=7-qga2cPuPYe7UnS" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-indigo-400 hover:text-indigo-300 font-medium transition cursor-pointer"
+                >
+                  Click here
+                </a>
+              </p>
+            </div>
           </div>
 
         </div>

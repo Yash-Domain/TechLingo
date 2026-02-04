@@ -11,43 +11,58 @@ export default function Day() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [checkedMap, setCheckedMap] = useState({});
-  const [submitting, setSubmitting] = useState(false); // New state to prevent double-clicks
+  const [submitting, setSubmitting] = useState(false);
+  const [isAlreadyCompleted, setIsAlreadyCompleted] = useState(false); // New State
 
-  /* ------------------ FETCH DAY ------------------ */
+  /* ------------------ FETCH DATA ------------------ */
   useEffect(() => {
-    // 1. Race Condition Fix: Reset state immediately when 'day' changes
+    // Reset state immediately when 'day' changes
     setDayData(null);
     setLoading(true);
     setError("");
     setCheckedMap({});
+    setIsAlreadyCompleted(false);
 
-    async function loadDay() {
+    async function loadData() {
       try {
-        const data = await apiRequest(`/api/day/${day}`);
+        // 1. Fetch Day Content
+        const contentPromise = apiRequest(`/api/day/${day}`);
         
-        // 2. Safety Check: Ensure data is valid before setting
-        if (!data || !data.title) {
+        // 2. Fetch User Progress to check if already completed
+        const progressPromise = apiRequest("/api/progress");
+
+        const [contentData, progressData] = await Promise.all([contentPromise, progressPromise]);
+
+        // Validate Content
+        if (!contentData || !contentData.title) {
             throw new Error("Content is being generated. Please wait a moment and reload.");
         }
 
-        setDayData(data);
+        setDayData(contentData);
+
+        // Check if this day is already in completedDays
+        const completedDays = (progressData.completedDays || []).map(Number);
+        if (completedDays.includes(Number(day))) {
+            setIsAlreadyCompleted(true);
+        }
 
         // Load checkbox states from localStorage
         const initialChecked = {};
-        if (data.practice_questions) {
-            data.practice_questions.forEach((q) => {
+        if (contentData.practice_questions) {
+            contentData.practice_questions.forEach((q) => {
               const key = `techlingo:day:${day}:question:${q._id}`;
               initialChecked[q._id] = localStorage.getItem(key) === "true";
             });
         }
         setCheckedMap(initialChecked);
+
       } catch (err) {
         setError(err.message || "Failed to load day content");
       } finally {
         setLoading(false);
       }
     }
-    loadDay();
+    loadData();
   }, [day]);
 
   /* ------------------ TOGGLE CHECKBOX ------------------ */
@@ -62,8 +77,14 @@ export default function Day() {
   }
 
   /* ------------------ MARK DAY COMPLETE ------------------ */
-  async function markDayComplete() {
-    if (submitting) return; // Prevent multiple clicks
+  async function handleCompleteButton() {
+    // If already completed, just go back to dashboard
+    if (isAlreadyCompleted) {
+        navigate("/dashboard");
+        return;
+    }
+
+    if (submitting) return; 
     setSubmitting(true);
     
     try {
@@ -76,45 +97,34 @@ export default function Day() {
       navigate("/dashboard");
     } catch (err) {
       console.error("Failed to mark day complete", err);
-      setSubmitting(false); // Only re-enable on error
+      setSubmitting(false);
     }
   }
 
   /* ------------------ HELPERS FOR CODE FORMATTING ------------------ */
   const formatCode = (code, type) => {
     let formatted = code || "";
-    
-    // 1. Normalize newlines (handle \n literals from JSON)
     formatted = formatted.replace(/\\n/g, '\n'); 
 
     if (type === 'cpp') {
-      // --- SMART FIX FOR C++ ---
-      // If the backend forgot the "//" comment symbol but has a semicolon, 
-      // we assume everything after the LAST semicolon is the comment.
       if (!formatted.includes('//') && formatted.includes(';')) {
-        // Regex: Find last semicolon, capture text after it, inject "//"
         formatted = formatted.replace(/;([^;]*)$/, '; //$1');
       }
-
-      // Standard Formatting
       formatted = formatted
-        .replace(/;/g, ';\n')       // Force break after semicolon
-        .replace(/\/\//g, '\n//');  // Force break before comment
+        .replace(/;/g, ';\n')
+        .replace(/\/\//g, '\n//');
     
     } else {
-      // Python Formatting
       formatted = formatted
-        .replace(/#/g, '\n#')       // Force break before # comment
-        .replace(/;/g, ';\n');      // Force break after semicolon (if present)
+        .replace(/#/g, '\n#')
+        .replace(/;/g, ';\n');
     }
 
-    // Split into lines and remove empty ones
     return formatted.split('\n').filter(line => line.trim() !== '');
   };
 
   const renderCodeLine = (line) => {
     const trimmed = line.trim();
-    // Identify comments to color them differently
     const isComment = trimmed.startsWith('//') || trimmed.startsWith('#');
     
     return (
@@ -138,7 +148,6 @@ export default function Day() {
     </div>
   );
 
-  // 3. Robust Loading Check: If loading OR data is null (race condition), show loader
   if (loading || !dayData)
     return (
       <PageWrapper>
@@ -174,7 +183,7 @@ export default function Day() {
       <div className="flex justify-between items-center p-6 max-w-5xl mx-auto">
         <button
           onClick={() => navigate("/dashboard")}
-          className="text-sm text-zinc-300 hover:text-white transition flex items-center gap-2 group"
+          className="text-sm text-zinc-300 hover:text-white transition flex items-center gap-2 group cursor-pointer" // ✅ Added cursor-pointer
         >
           <span className="group-hover:-translate-x-1 transition-transform">←</span> Back to Dashboard
         </button>
@@ -379,22 +388,30 @@ export default function Day() {
               </div>
             </section>
 
-                {/* Mark Day Complete */}
-              <div className="flex justify-end pt-8 border-t border-zinc-800">
-                <button
-                  onClick={markDayComplete}
-                  disabled={submitting}
-                  className={`
-                    px-6 py-3 rounded-xl font-semibold transition
-                    ${submitting 
-                      ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
-                      : 'bg-emerald-500 text-black hover:bg-emerald-400'
-                    }
-                  `}
-                >
-                  {submitting ? "Saving..." : `Mark Day ${day} Complete`}
-                </button>
-              </div>
+             {/* Mark Day Complete */}
+            <div className="flex justify-end pt-8 border-t border-zinc-800">
+              <button
+                onClick={handleCompleteButton}
+                disabled={submitting && !isAlreadyCompleted} // Disable if submitting and NOT already completed
+                className={`
+                  px-6 py-3 rounded-xl font-semibold transition cursor-pointer
+                  ${isAlreadyCompleted
+                    ? 'bg-zinc-800 text-emerald-400 border border-emerald-500/30 hover:bg-zinc-700' // Completed Style
+                    : submitting 
+                        ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' 
+                        : 'bg-emerald-500 text-black hover:bg-emerald-400' // Default Active Style
+                  }
+                `}
+              >
+                {/* Button Text Logic */}
+                {isAlreadyCompleted 
+                  ? "✓ Completed" 
+                  : submitting 
+                    ? "Saving..." 
+                    : `Mark Day ${day} Complete`
+                }
+              </button>
+            </div>
 
 
           </div>

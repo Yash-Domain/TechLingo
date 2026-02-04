@@ -21,7 +21,7 @@ export default function Login() {
       });
 
       localStorage.setItem("token", data.token);
-       navigate("/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
 
     } catch (err) {
       setError(err.message);
@@ -32,11 +32,25 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-zinc-950 overflow-hidden px-4">
-      {/* Background blobs — SAME AS SIGNUP */}
+      
+      {/* Back to Home Button */}
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 z-10 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m12 19-7-7 7-7"/>
+          <path d="M19 12H5"/>
+        </svg>
+        <span className="text-sm font-medium">Back to Home</span>
+      </Link>
+
+      {/* Background blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-600 rounded-full blur-[128px] opacity-40"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cyan-600 rounded-full blur-[128px] opacity-40"></div>
       <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-600 rounded-full blur-[96px] opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
 
+      {/* Card */}
       <div className="relative w-full max-w-md">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl blur opacity-20"></div>
 
@@ -76,7 +90,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-4 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition"
+              className="mt-4 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 transition cursor-pointer"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
@@ -85,7 +99,7 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-sm text-zinc-400">
               New to TechLingo?{" "}
-              <Link to="/signup" className="text-indigo-400 hover:text-indigo-300">
+              <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 cursor-pointer">
                 Create an account
               </Link>
             </p>
