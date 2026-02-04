@@ -1,4 +1,4 @@
-const API_BASE = "https://techlingo-backend.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export async function apiRequest(path, options = {}) {
   const token = localStorage.getItem("token");
