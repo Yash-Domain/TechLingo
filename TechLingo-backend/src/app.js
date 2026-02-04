@@ -18,12 +18,16 @@ const app = express();
    ======================= */
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://tech-lingo.vercel.app"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
+
 
 // 👇 THIS LINE IS REQUIRED FOR PREFLIGHT
 app.options("*", cors());
